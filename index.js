@@ -121,10 +121,8 @@ async function getWeeklyHistoricalPrices() {
   candles = myJson.result['21600']
   //Get biggest most common support level
   for( var i = 0; i < candles.length - 1; i++){
-    console.log("go through " + i)
-    for(var j = 0; j < 18; j++){ //get lowest 10 prices of the week
-      console.log("break1")
-      if(lowestPrices.length < 11){
+    for(var j = 0; j < 15; j++){ //get lowest 10 prices of the week
+      if(lowestPrices.length < 15){
         lowestPrices.push(candles[i][3])
         break;
       }
@@ -133,9 +131,8 @@ async function getWeeklyHistoricalPrices() {
         break
       }
     }
-    for(var j = 0; j < 18; j++){ //get lowest 10 prices of the week
-      console.log("break2")
-      if(highestPrices.length < 11){
+    for(var j = 0; j < 15; j++){ //get lowest 10 prices of the week
+      if(highestPrices.length < 15){
         highestPrices.push(candles[i][2])
         break;
       } 
