@@ -30,7 +30,6 @@ const web3 = new Web3(new HDWalletProvider(process.env.PRIVATE_KEY, process.env.
 
 // Minimum eth to swap
 const ETH_AMOUNT = web3.utils.toWei('1', 'Ether')
-console.log("Eth Amount", ETH_AMOUNT)
 
 const ETH_SELL_PRICE = web3.utils.toWei('100', 'Ether') // 200 Dai a.k.a. $200 USD
 
@@ -82,10 +81,27 @@ async function getDailyHistoricalPrices() {
 async function getHourlyHistoricalPrices() {
   date = Math.round((new Date()).getTime() / 1000); //JS gets date in MS convert to sec
   oneDayWindow = (date - 3600).toString()
-  apiString = `https://api.cryptowat.ch/markets/uniswap-v2/daiweth/ohlc?after=${oneDayWindow}&periods=600` // Get data for the past hour and have each candle 10 mins interval
+  apiString = `https://api.cryptowat.ch/markets/uniswap-v2/daiweth/ohlc?after=${oneDayWindow}&periods=300` // Get data for the past hour and have each candle 5 mins interval
   const response = await fetch(apiString.toString());
   const myJson = await response.json(); //extract JSON from the http response
-  console.log(myJson.result['600'])
+  console.log(myJson.result['300'])
+  // do something with myJson
+}
+
+async function get5MinsHistoricalPrices() {
+  date = Math.round((new Date()).getTime() / 1000); //JS gets date in MS convert to sec
+  oneDayWindow = (date - 600).toString()
+  apiString = `https://api.cryptowat.ch/markets/uniswap-v2/daiweth/ohlc?after=${oneDayWindow}&periods=300` // Get data for the past hour and have each candle 5 mins interval
+  const response = await fetch(apiString.toString());
+  const myJson = await response.json(); //extract JSON from the http response
+  candles = myJson.result['300']
+  for (var k = 0; k < candles.length - 1; k++){
+    candles[k][4] = 1/candles[k][4]
+    candles[k][3] = 1/candles[k][3]
+    candles[k][2] = 1/candles[k][2]
+    candles[k][1] = 1/candles[k][1]
+  }
+  return [candles[0], candles[1]]
   // do something with myJson
 }
 
@@ -99,6 +115,8 @@ async function getHourlySSLChannel() {
   var highSum = 0;
   var lowSum = 0;
   var sumVolume = 0;
+  var prevHighSum = 0;
+  var prevLowSum = 0;
   var aboveAvgVolume = false;
   for (var k = 0; k < candles.length - 1; k++){
     candles[k][4] = 1/candles[k][4]
@@ -109,22 +127,23 @@ async function getHourlySSLChannel() {
     }
   }
   for (var i = candles.length - 2; i > 1; i--){
-    console.log(i)
     highSum = highSum + candles[i][2]
+    prevHighSum = prevHighSum + candles[i-1][2]
     lowSum = lowSum + candles[i][3]
+    prevLowSum = prevLowSum + candles[i-1][3]
   }
   highSMA = highSum/10;
   lowSMA = lowSum/10;
+  prevHighSMA = prevHighSum/10
+  prevLowSMA = prevLowSum/10
   volumeAvg = sumVolume/12;
-  if(candles[11][5] > volumeAvg + 5000){
+  if(candles[11][5] > volumeAvg + 8000){
     aboveAvgVolume = true;
   }
-  console.log(volumeAvg)
-  console.log(candles[11][5])
   // currentCandleVolume = candles[12][5]
   // currentCandleHigh = candles[12][2]
   // currentCandleLow = candles[12][3]
-  return [lowSum, highSum, aboveAvgVolume]
+  return [lowSMA, highSMA, prevLowSMA, prevHighSMA, aboveAvgVolume]
 }
 
 async function get50MinDayEMA() {
@@ -139,8 +158,8 @@ async function get50MinDayEMA() {
   for (var k = 0; k < candles.length - 1; k++){
     candles[k][4] = 1/candles[k][4]
   }
-  for (var i = candles.length - 51; i < candles.length; i++) {
-    if(i > candles.length - 51){
+  for (var i = candles.length - 52; i < candles.length-1; i++) {
+    if(i > candles.length - 52){
       pastEMA = (candles[i][4] * (2/51)) + (pastEMA * (1-(2/51))) //EMA formula EMA=Price(currentDay)×#ofDaysWanted+EMA(pastDay)×(1−#ofDaysWanted)
       emaList.push(pastEMA)
     } else{
@@ -220,10 +239,67 @@ async function monitorPrice() {
   }
 
   console.log("Checking price...")
+  var count;
   monitoringPrice = true
+  var trend;
 
-  var EMA = await getHourlySSLChannel()
-  console.log(EMA)
+  if(POLLING_INTERVAL == 3600000){
+    count = 0
+    var SSL = await getHourlySSLChannel()
+    console.log(SSL)
+    if(SSL[4] == true){
+      if(SSL[1] - SSL[0] > 0 && SSL[3] - SSL[2] < 0){
+        console.log("Trending UP")
+        trend = "Up"
+        clearInterval()
+        setInterval(300000)
+      } else if(SSL[0] - SSL[1] > 0 && SSL[2] - SSL[3] < 0){
+        console.log("Trending Down")
+        trend = "Down"
+        clearInterval()
+        setInterval(300000)
+      } else {
+        console.log("No trend change")
+        trend = "No Trend"
+        console.log("Current Balances")
+        console.log("Eth Amount: " + eth)
+        console.log("Dai Amount: " + dai)
+      }
+    }
+  } else if(POLLING_INTERVAL == 300000){
+    count = count + 1
+    if(count > 6){
+      console.log("Never Touched EMA")
+      clearInterval()
+      setInterval(3600000)
+    } else{
+      var getRecentCandles = await get5MinsHistoricalPrices();
+      var get50MinDayEMA = await get50MinDayEMA();
+      if (trend === "Up"){
+        if(getRecentCandles[0][1] - getRecentCandles[0][4] < 0 && getRecentCandles[1][1] - getRecentCandles[1][4] > 0 && (getRecentCandles[0][4] >= get50MinDayEMA[48] - 10 && getRecentCandles[0][4] <= get50MinDayEMA[48] + 3) && (getRecentCandles[1][4] >= get50MinDayEMA[49] - 3 && getRecentCandles[1][4] <= get50MinDayEMA[49] + 5)){
+          console.log("Buy Eth")
+          priceEth = getRecentCandles[1][4];
+          dai = dai - (dai*.8);
+          eth = eth + (dai/priceEth)
+          console.log("New Dai Amount: " + dai)
+          console.log("New Eth Amount: " + eth)
+          clearInterval()
+        setInterval(3600000)
+        }
+      } else if(trend === "Down"){
+        if(getRecentCandles[0][1] - getRecentCandles[0][4] > 0 && getRecentCandles[1][1] - getRecentCandles[1][4] < 0 && (getRecentCandles[0][4] >= get50MinDayEMA[48] - 3 && getRecentCandles[0][4] <= get50MinDayEMA[48] + 5) && (getRecentCandles[1][4] >= get50MinDayEMA[49] - 10 && getRecentCandles[1][4] <= get50MinDayEMA[49] + 3)){
+          console.log("Sell Eth")
+          priceDai = 1/getRecentCandles[1][4];
+          eth = eth - (eth*.8);
+          dai = dai + (eth/priceDai);
+          console.log("New Dai Amount: " + dai)
+          console.log("New Eth Amount: " + eth)
+          clearInterval()
+          setInterval(3600000)
+        }
+      }
+    }
+  }
 
   // try {
 
@@ -257,6 +333,8 @@ async function monitorPrice() {
   monitoringPrice = false
 }
 
+var eth = 10;
+var dai = 5000;
 // Check markets every n seconds
-const POLLING_INTERVAL = process.env.POLLING_INTERVAL || 5000 // 1 Second
+const POLLING_INTERVAL = process.env.POLLING_INTERVAL || 3600000 // 1 Second
 priceMonitor = setInterval(async () => { await monitorPrice() }, POLLING_INTERVAL)
