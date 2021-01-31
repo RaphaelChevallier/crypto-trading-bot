@@ -89,6 +89,68 @@ async function getHourlyHistoricalPrices() {
   // do something with myJson
 }
 
+async function getHourlySSLChannel() {
+  date = Math.round((new Date()).getTime() / 1000); //JS gets date in MS convert to sec
+  oneDayWindow = (date - 43200).toString()
+  apiString = `https://api.cryptowat.ch/markets/uniswap-v2/daiweth/ohlc?after=${oneDayWindow}&periods=3600` // Get data for the past 12 hrs and have each candle 1 hr interval
+  const response = await fetch(apiString.toString());
+  const myJson = await response.json(); //extract JSON from the http response
+  candles = myJson.result['3600']
+  var highSum = 0;
+  var lowSum = 0;
+  var sumVolume = 0;
+  var aboveAvgVolume = false;
+  for (var k = 0; k < candles.length - 1; k++){
+    candles[k][4] = 1/candles[k][4]
+    candles[k][2] = 1/candles[k][2]
+    candles[k][3] = 1/candles[k][3]
+    if(k != 12){
+      sumVolume = sumVolume + candles[k][5]
+    }
+  }
+  for (var i = candles.length - 2; i > 1; i--){
+    console.log(i)
+    highSum = highSum + candles[i][2]
+    lowSum = lowSum + candles[i][3]
+  }
+  highSMA = highSum/10;
+  lowSMA = lowSum/10;
+  volumeAvg = sumVolume/12;
+  if(candles[11][5] > volumeAvg + 5000){
+    aboveAvgVolume = true;
+  }
+  console.log(volumeAvg)
+  console.log(candles[11][5])
+  // currentCandleVolume = candles[12][5]
+  // currentCandleHigh = candles[12][2]
+  // currentCandleLow = candles[12][3]
+  return [lowSum, highSum, aboveAvgVolume]
+}
+
+async function get50MinDayEMA() {
+  date = Math.round((new Date()).getTime() / 1000); //JS gets date in MS convert to sec
+  oneDayWindow = (date - 172800).toString()
+  apiString = `https://api.cryptowat.ch/markets/uniswap-v2/daiweth/ohlc?after=${oneDayWindow}&periods=300` // Get data for the past 2days and have each candle 5mins day interval
+  const response = await fetch(apiString.toString());
+  const myJson = await response.json(); //extract JSON from the http response
+  candles = myJson.result['300']
+  var pastEMA = 0;
+  var emaList = new Array();
+  for (var k = 0; k < candles.length - 1; k++){
+    candles[k][4] = 1/candles[k][4]
+  }
+  for (var i = candles.length - 51; i < candles.length; i++) {
+    if(i > candles.length - 51){
+      pastEMA = (candles[i][4] * (2/51)) + (pastEMA * (1-(2/51))) //EMA formula EMA=Price(currentDay)×#ofDaysWanted+EMA(pastDay)×(1−#ofDaysWanted)
+      emaList.push(pastEMA)
+    } else{
+      pastEMA = ((candles[i][4] + candles[i - 1][4] + candles[i - 2][4] + candles[i - 3][4] + candles[i - 4][4] + candles[i - 5][4] + candles[i - 6][4] + candles[i - 7][4] + candles[i - 8][4] + candles[i - 9][4] + candles[i - 10][4] + candles[i - 11][4] + candles[i - 12][4] + candles[i - 13][4] + candles[i - 14][4] + candles[i - 15][4] + candles[i - 16][4] + candles[i - 17][4] + candles[i - 18][4] + candles[i - 19][4] + candles[i - 20][4] + candles[i - 21][4] + candles[i - 22][4] + candles[i - 23][4] + candles[i - 24][4] + candles[i - 25][4] + candles[i - 26][4] + candles[i - 27][4] + candles[i - 28][4] + candles[i - 29][4] + candles[i - 30][4] + candles[i - 31][4] + candles[i - 32][4] + candles[i - 33][4] + candles[i - 34][4] + candles[i - 35][4] + candles[i - 36][4] + candles[i - 37][4] + candles[i - 38][4] + candles[i - 39][4] + candles[i-40][4] + candles[i - 41][4] + candles[i - 42][4] + candles[i - 43][4] + candles[i - 44][4] + candles[i - 45][4] + candles[i - 46][4] + candles[i - 47][4] + candles[i - 48][4] + candles[i - 49][4])/50) //get EMA of 10th day
+      emaList.push(pastEMA)
+    }
+  }
+  return emaList
+}
+
 async function getTenDayEMA() {
   date = Math.round((new Date()).getTime() / 1000); //JS gets date in MS convert to sec
   oneDayWindow = (date - 1728000).toString()
@@ -98,7 +160,11 @@ async function getTenDayEMA() {
   candles = myJson.result['86400']
   var pastEMA = 0;
   var emaList = new Array(); //create list of EMA for every day. start is day 10 and last is most recent
+  for (var k = 0; k < candles.length - 1; k++){
+    candles[k][4] = 1/candles[k][4]
+  }
   for (var i = candles.length - 11; i < candles.length - 1; i++) { //get the 10-Day EMA value
+    console.log(candles[k][0])
     if(i > candles.length - 11){
       pastEMA = (candles[i][4] * (2/11)) + (pastEMA * (1-(2/11))) //EMA formula EMA=Price(currentDay)×#ofDaysWanted+EMA(pastDay)×(1−#ofDaysWanted)
       emaList.push(pastEMA)
@@ -123,22 +189,22 @@ async function getWeeklyHistoricalPrices() {
   for( var i = 0; i < candles.length - 1; i++){
     for(var j = 0; j < 15; j++){ //get lowest 10 prices of the week
       if(lowestPrices.length < 15){
-        lowestPrices.push(candles[i][3])
+        lowestPrices.push(1/candles[i][2]) //prices are inverted to get the highest eth price to dollar as this is getting dollar to eth prices
         break;
       }
-      if (candles[i][4] < lowestPrices[j]) {
-        lowestPrices[j] = candles[i][3]
-        break
+      if (1/candles[i][2] < lowestPrices[j]) {
+        lowestPrices[j] = 1/candles[i][2]
+        break;
       }
     }
     for(var j = 0; j < 15; j++){ //get lowest 10 prices of the week
       if(highestPrices.length < 15){
-        highestPrices.push(candles[i][2])
+        highestPrices.push(1/candles[i][3])
         break;
       } 
-      if (candles[i][4] < highestPrices[j]) {
-        highestPrices[j] = candles[i][2]
-        break
+      if (1/candles[i][3] > highestPrices[j]) {
+        highestPrices[j] = 1/candles[i][3]
+        break;
       }
     }
   }
@@ -156,9 +222,9 @@ async function monitorPrice() {
   console.log("Checking price...")
   monitoringPrice = true
 
-  var EMA = await getWeeklyHistoricalPrices()
-  console.log(EMA[0])
-  console.log(EMA[1])
+  var EMA = await getHourlySSLChannel()
+  console.log(EMA)
+
   // try {
 
   //   // Check Eth Price
