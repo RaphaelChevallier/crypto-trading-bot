@@ -242,6 +242,8 @@ async function monitorPrice() {
   var count;
   monitoringPrice = true
   var trend;
+  var SSL = await getHourlySSLChannel()
+
 
   if(POLLING_INTERVAL == 3600000){
     count = 0
@@ -277,25 +279,29 @@ async function monitorPrice() {
       var get50MinDayEMA = await get50MinDayEMA();
       if (trend === "Up"){
         if(getRecentCandles[0][1] - getRecentCandles[0][4] < 0 && getRecentCandles[1][1] - getRecentCandles[1][4] > 0 && (getRecentCandles[0][4] >= get50MinDayEMA[48] - 10 && getRecentCandles[0][4] <= get50MinDayEMA[48] + 3) && (getRecentCandles[1][4] >= get50MinDayEMA[49] - 3 && getRecentCandles[1][4] <= get50MinDayEMA[49] + 5)){
-          console.log("Buy Eth")
-          priceEth = getRecentCandles[1][4];
-          dai = dai - (dai*.8);
-          eth = eth + (dai/priceEth)
-          console.log("New Dai Amount: " + dai)
-          console.log("New Eth Amount: " + eth)
-          clearInterval()
-        setInterval(3600000)
+          if(dai > 100){
+            console.log("Buy Eth")
+            priceEth = getRecentCandles[1][4];
+            eth = eth + ((dai*.9)/priceEth)
+            dai = dai - 15 -(dai*.1);
+            console.log("New Dai Amount: " + dai)
+            console.log("New Eth Amount: " + eth)
+            clearInterval()
+            setInterval(3600000)
+          }
         }
       } else if(trend === "Down"){
         if(getRecentCandles[0][1] - getRecentCandles[0][4] > 0 && getRecentCandles[1][1] - getRecentCandles[1][4] < 0 && (getRecentCandles[0][4] >= get50MinDayEMA[48] - 3 && getRecentCandles[0][4] <= get50MinDayEMA[48] + 5) && (getRecentCandles[1][4] >= get50MinDayEMA[49] - 10 && getRecentCandles[1][4] <= get50MinDayEMA[49] + 3)){
-          console.log("Sell Eth")
-          priceDai = 1/getRecentCandles[1][4];
-          eth = eth - (eth*.8);
-          dai = dai + (eth/priceDai);
-          console.log("New Dai Amount: " + dai)
-          console.log("New Eth Amount: " + eth)
-          clearInterval()
-          setInterval(3600000)
+          if(eth > .5){
+            console.log("Sell Eth")
+            priceDai = 1/getRecentCandles[1][4];
+            dai = dai + ((eth*.9)/priceDai);
+            eth = eth - 0.00833386 - (eth*.1);
+            console.log("New Dai Amount: " + dai)
+            console.log("New Eth Amount: " + eth)
+            clearInterval()
+            setInterval(3600000)
+          }
         }
       }
     }
