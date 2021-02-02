@@ -272,6 +272,7 @@ async function monitorPrice() {
     }
   } else if(POLLING_INTERVAL == 300000){
     count = count + 1
+    console.log("Count of tries to touch EMA: " + count)
     if(count > 6){
       console.log("Never Touched EMA")
       clearInterval()
@@ -279,9 +280,9 @@ async function monitorPrice() {
       setInterval(async () => await monitorPrice(), 3600000);
     } else{
       var getRecentCandles = await get5MinsHistoricalPrices();
-      var get50MinDayEMA = await get50MinDayEMA();
+      var getEMA = await get50MinDayEMA();
       if (trend === "Up"){
-        if(getRecentCandles[0][1] - getRecentCandles[0][4] < 0 && getRecentCandles[1][1] - getRecentCandles[1][4] > 0 && (getRecentCandles[0][4] >= get50MinDayEMA[48] - 10 && getRecentCandles[0][4] <= get50MinDayEMA[48] + 3) && (getRecentCandles[1][4] >= get50MinDayEMA[49] - 3 && getRecentCandles[1][4] <= get50MinDayEMA[49] + 5)){
+        if(getRecentCandles[0][1] > getRecentCandles[0][4] && getRecentCandles[1][1] < getRecentCandles[1][4] && (getRecentCandles[0][2] >= getEMA[48] && getRecentCandles[0][3] <= getEMA[48]) && (getRecentCandles[1][2] >= getEMA[49] && getRecentCandles[1][3] <= getEMA[49])){
           if(dai > 100){
             console.log("Buy Eth")
             priceEth = getRecentCandles[1][4];
@@ -295,7 +296,7 @@ async function monitorPrice() {
           }
         }
       } else if(trend === "Down"){
-        if(getRecentCandles[0][1] - getRecentCandles[0][4] > 0 && getRecentCandles[1][1] - getRecentCandles[1][4] < 0 && (getRecentCandles[0][4] >= get50MinDayEMA[48] - 3 && getRecentCandles[0][4] <= get50MinDayEMA[48] + 5) && (getRecentCandles[1][4] >= get50MinDayEMA[49] - 10 && getRecentCandles[1][4] <= get50MinDayEMA[49] + 3)){
+        if(getRecentCandles[0][1] < getRecentCandles[0][4] && getRecentCandles[1][1] > getRecentCandles[1][4] && (getRecentCandles[0][2] >= getEMA[48] && getRecentCandles[0][3] <= getEMA[48]) && (getRecentCandles[1][2] >= getEMA[49] && getRecentCandles[1][3] <= getEMA[49])){
           if(eth > .5){
             console.log("Sell Eth")
             priceDai = 1/getRecentCandles[1][4];
