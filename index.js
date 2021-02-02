@@ -254,12 +254,14 @@ async function monitorPrice() {
         console.log("Trending UP")
         trend = "Up"
         clearInterval()
-        setInterval(await monitorPrice(), 300000)
+        POLLING_INTERVAL = 300000 || process.env.POLLING_INTERVAL
+        setInterval(async () => await monitorPrice(), 300000);
       } else if(SSL[0] > SSL[5]){
         console.log("Trending Down")
         trend = "Down"
         clearInterval()
-        setInterval(await monitorPrice(), 300000)
+        POLLING_INTERVAL = 300000 || process.env.POLLING_INTERVAL
+        setInterval(async () => await monitorPrice(), 300000);
       } else {
         console.log("No trend change")
         trend = "No Trend"
@@ -273,7 +275,8 @@ async function monitorPrice() {
     if(count > 6){
       console.log("Never Touched EMA")
       clearInterval()
-      setInterval(await monitorPrice(), 3600000)
+      POLLING_INTERVAL = 3600000 || process.env.POLLING_INTERVAL
+      setInterval(async () => await monitorPrice(), 3600000);
     } else{
       var getRecentCandles = await get5MinsHistoricalPrices();
       var get50MinDayEMA = await get50MinDayEMA();
@@ -287,7 +290,8 @@ async function monitorPrice() {
             console.log("New Dai Amount: " + dai)
             console.log("New Eth Amount: " + eth)
             clearInterval()
-            setInterval(await monitorPrice(), 3600000)
+            POLLING_INTERVAL = 3600000 || process.env.POLLING_INTERVAL
+            setInterval(async () => await monitorPrice(), 3600000);
           }
         }
       } else if(trend === "Down"){
@@ -300,7 +304,8 @@ async function monitorPrice() {
             console.log("New Dai Amount: " + dai)
             console.log("New Eth Amount: " + eth)
             clearInterval()
-            setInterval(await monitorPrice(), 3600000)
+            POLLING_INTERVAL = 3600000 || process.env.POLLING_INTERVAL
+            setInterval(async () => await monitorPrice(), 3600000);
           }
         }
       }
@@ -342,5 +347,5 @@ async function monitorPrice() {
 var eth = 10;
 var dai = 5000;
 // Check markets every n seconds
-const POLLING_INTERVAL = process.env.POLLING_INTERVAL || 3600000 // 1 Second
+var POLLING_INTERVAL = process.env.POLLING_INTERVAL || 3600000 // 1 Second
 priceMonitor = setInterval(async () => { await monitorPrice() }, POLLING_INTERVAL)
