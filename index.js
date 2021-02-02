@@ -137,13 +137,13 @@ async function getHourlySSLChannel() {
   prevHighSMA = prevHighSum/10
   prevLowSMA = prevLowSum/10
   volumeAvg = sumVolume/12;
-  if(candles[11][5] > volumeAvg + 8000){
+  if(candles[11][5] > volumeAvg + 5000){
     aboveAvgVolume = true;
   }
   // currentCandleVolume = candles[12][5]
   // currentCandleHigh = candles[12][2]
   // currentCandleLow = candles[12][3]
-  return [lowSMA, highSMA, prevLowSMA, prevHighSMA, aboveAvgVolume]
+  return [lowSMA, highSMA, prevLowSMA, prevHighSMA, aboveAvgVolume, candles[11][4]]
 }
 
 async function get50MinDayEMA() {
@@ -250,16 +250,16 @@ async function monitorPrice() {
     var SSL = await getHourlySSLChannel()
     console.log(SSL)
     if(SSL[4] == true){
-      if(SSL[1] - SSL[0] > 0 && SSL[3] - SSL[2] < 0){
+      if(SSL[1] < SSL[5]){
         console.log("Trending UP")
         trend = "Up"
         clearInterval()
-        setInterval(300000)
-      } else if(SSL[0] - SSL[1] > 0 && SSL[2] - SSL[3] < 0){
+        setInterval(await monitorPrice(), 300000)
+      } else if(SSL[0] > SSL[5]){
         console.log("Trending Down")
         trend = "Down"
         clearInterval()
-        setInterval(300000)
+        setInterval(await monitorPrice(), 300000)
       } else {
         console.log("No trend change")
         trend = "No Trend"
@@ -273,7 +273,7 @@ async function monitorPrice() {
     if(count > 6){
       console.log("Never Touched EMA")
       clearInterval()
-      setInterval(3600000)
+      setInterval(await monitorPrice(), 3600000)
     } else{
       var getRecentCandles = await get5MinsHistoricalPrices();
       var get50MinDayEMA = await get50MinDayEMA();
@@ -287,7 +287,7 @@ async function monitorPrice() {
             console.log("New Dai Amount: " + dai)
             console.log("New Eth Amount: " + eth)
             clearInterval()
-            setInterval(3600000)
+            setInterval(await monitorPrice(), 3600000)
           }
         }
       } else if(trend === "Down"){
@@ -300,7 +300,7 @@ async function monitorPrice() {
             console.log("New Dai Amount: " + dai)
             console.log("New Eth Amount: " + eth)
             clearInterval()
-            setInterval(3600000)
+            setInterval(await monitorPrice(), 3600000)
           }
         }
       }
