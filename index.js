@@ -9,6 +9,7 @@ const numeral = require('numeral')
 const _ = require('lodash')
 const fetch = require("node-fetch");
 const { range } = require('lodash')
+const notifier = require('node-notifier');
 
 // SERVER CONFIG
 const PORT = process.env.PORT || 5000
@@ -252,12 +253,26 @@ async function monitorPrice() {
     if(SSL[4] == true){
       if(SSL[1] < SSL[5]){
         console.log("Trending UP")
+        notifier.notify({
+          'title': 'Found trend going Up. Looking at EMA.',
+          'message': 'Up Trend Identified',
+          'sound': 'ding.mp3',
+          'wait': true,
+          timeout: 5
+        });
         trend = "Up"
         clearInterval()
         POLLING_INTERVAL = 300000 || process.env.POLLING_INTERVAL
         setInterval(async () => await monitorPrice(), 300000);
       } else if(SSL[0] > SSL[5]){
         console.log("Trending Down")
+        notifier.notify({
+          'title': 'Found trend going Down. Looking at EMA.',
+          'message': 'Down Trend Identified',
+          'sound': 'ding.mp3',
+          'wait': true,
+          timeout: 5
+        });
         trend = "Down"
         clearInterval()
         POLLING_INTERVAL = 300000 || process.env.POLLING_INTERVAL
@@ -286,6 +301,13 @@ async function monitorPrice() {
         if(getRecentCandles[0][1] > getRecentCandles[0][4] && getRecentCandles[1][1] < getRecentCandles[1][4] && (getRecentCandles[0][2] >= getEMA[48] && getRecentCandles[0][3] <= getEMA[48]) && (getRecentCandles[1][2] >= getEMA[49] && getRecentCandles[1][3] <= getEMA[49])){
           if(dai > 100){
             console.log("Buy Eth")
+            notifier.notify({
+              'title': 'Hit EMA on up trend.',
+              'message': 'Buying Eth on known uptrend',
+              'sound': 'ding.mp3',
+              'wait': true,
+              timeout: 5
+            });
             priceEth = getRecentCandles[1][4];
             eth = eth + ((dai*.9)/priceEth)
             dai = dai - 15 -(dai*.1);
@@ -300,6 +322,13 @@ async function monitorPrice() {
         if(getRecentCandles[0][1] < getRecentCandles[0][4] && getRecentCandles[1][1] > getRecentCandles[1][4] && (getRecentCandles[0][2] >= getEMA[48] && getRecentCandles[0][3] <= getEMA[48]) && (getRecentCandles[1][2] >= getEMA[49] && getRecentCandles[1][3] <= getEMA[49])){
           if(eth > .5){
             console.log("Sell Eth")
+            notifier.notify({
+              'title': 'Hit EMA on down trend.',
+              'message': 'Selling Eth on known uptrend',
+              'sound': 'ding.mp3',
+              'wait': true,
+              timeout: 5
+            });
             priceDai = 1/getRecentCandles[1][4];
             dai = dai + ((eth*.9)/priceDai);
             eth = eth - 0.00833386 - (eth*.1);
