@@ -232,6 +232,7 @@ async function getWeeklyHistoricalPrices() {
 
 let priceMonitor
 let monitoringPrice = false
+let countMarkers = 0;
 
 async function monitorPrice() {
   if(monitoringPrice) {
@@ -239,14 +240,13 @@ async function monitorPrice() {
   }
 
   console.log("Checking price...")
-  var count;
+  console.log(POLLING_INTERVAL)
   monitoringPrice = true
   var trend;
   var SSL = await getHourlySSLChannel()
 
 
   if(POLLING_INTERVAL == 3600000){
-    count = 0
     var SSL = await getHourlySSLChannel()
     console.log(SSL)
     if(SSL[4] == true){
@@ -271,10 +271,11 @@ async function monitorPrice() {
       }
     }
   } else if(POLLING_INTERVAL == 300000){
-    count = count + 1
-    console.log("Count of tries to touch EMA: " + count)
-    if(count > 6){
+    countMarkers = countMarkers + 1
+    console.log("Count of tries to touch EMA: " + countMarkers)
+    if(countMarkers > 6){
       console.log("Never Touched EMA")
+      countMarkers = 0;
       clearInterval()
       POLLING_INTERVAL = 3600000 || process.env.POLLING_INTERVAL
       setInterval(async () => await monitorPrice(), 3600000);
