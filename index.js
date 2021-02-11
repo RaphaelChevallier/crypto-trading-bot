@@ -119,11 +119,11 @@ async function getHourlySSLChannel() {
   var prevHighSum = 0;
   var prevLowSum = 0;
   var aboveAvgVolume = false;
-  for (var k = 0; k < candles.length - 1; k++){
+  for (var k = 0; k < candles.length; k++){
     candles[k][4] = 1/candles[k][4]
     candles[k][2] = 1/candles[k][2]
     candles[k][3] = 1/candles[k][3]
-    if(k != 12){
+    if(k < 12){
       sumVolume = sumVolume + candles[k][5]
     }
   }
@@ -137,8 +137,8 @@ async function getHourlySSLChannel() {
   lowSMA = lowSum/10;
   prevHighSMA = prevHighSum/10
   prevLowSMA = prevLowSum/10
-  volumeAvg = sumVolume/12;
-  if(candles[11][5] > volumeAvg + 5000){
+  volumeAvg = sumVolume/10;
+  if(candles[11][5] > volumeAvg + 10000){
     aboveAvgVolume = true;
   }
   // currentCandleVolume = candles[12][5]
@@ -156,19 +156,22 @@ async function get50MinDayEMA() {
   candles = myJson.result['300']
   var pastEMA = 0;
   var emaList = new Array();
-  for (var k = 0; k < candles.length - 1; k++){
+  for (var k = 0; k < candles.length; k++){
     candles[k][4] = 1/candles[k][4]
+    candles[k][3] = 1/candles[k][3]
+    candles[k][2] = 1/candles[k][2]
+    candles[k][1] = 1/candles[k][1]
   }
-  for (var i = candles.length - 52; i < candles.length-1; i++) {
-    if(i > candles.length - 52){
+  for (var i = candles.length - 52; i < candles.length-2; i++) {
+    if(i >= candles.length - 51){
       pastEMA = (candles[i][4] * (2/51)) + (pastEMA * (1-(2/51))) //EMA formula EMA=Price(currentDay)×#ofDaysWanted+EMA(pastDay)×(1−#ofDaysWanted)
       emaList.push(pastEMA)
     } else{
-      pastEMA = ((candles[i][4] + candles[i - 1][4] + candles[i - 2][4] + candles[i - 3][4] + candles[i - 4][4] + candles[i - 5][4] + candles[i - 6][4] + candles[i - 7][4] + candles[i - 8][4] + candles[i - 9][4] + candles[i - 10][4] + candles[i - 11][4] + candles[i - 12][4] + candles[i - 13][4] + candles[i - 14][4] + candles[i - 15][4] + candles[i - 16][4] + candles[i - 17][4] + candles[i - 18][4] + candles[i - 19][4] + candles[i - 20][4] + candles[i - 21][4] + candles[i - 22][4] + candles[i - 23][4] + candles[i - 24][4] + candles[i - 25][4] + candles[i - 26][4] + candles[i - 27][4] + candles[i - 28][4] + candles[i - 29][4] + candles[i - 30][4] + candles[i - 31][4] + candles[i - 32][4] + candles[i - 33][4] + candles[i - 34][4] + candles[i - 35][4] + candles[i - 36][4] + candles[i - 37][4] + candles[i - 38][4] + candles[i - 39][4] + candles[i-40][4] + candles[i - 41][4] + candles[i - 42][4] + candles[i - 43][4] + candles[i - 44][4] + candles[i - 45][4] + candles[i - 46][4] + candles[i - 47][4] + candles[i - 48][4] + candles[i - 49][4])/50) //get EMA of 10th day
+      pastEMA = ((candles[candles.length-52][4] + candles[candles.length-51][4] + candles[candles.length-50][4] + candles[candles.length-49][4] + candles[candles.length-48][4] + candles[candles.length-47][4] + candles[candles.length-46][4] + candles[candles.length-45][4] + candles[candles.length-44][4] + candles[candles.length-43][4] + candles[candles.length-42][4] + candles[candles.length-41][4] + candles[candles.length-40][4] + candles[candles.length-39][4] + candles[candles.length-38][4] + candles[candles.length-37][4] + candles[candles.length-36][4] + candles[candles.length-35][4] + candles[candles.length-34][4] + candles[candles.length-33][4] + candles[candles.length-32][4] + candles[candles.length-31][4] + candles[candles.length-30][4] + candles[candles.length-29][4] + candles[candles.length-28][4] + candles[candles.length-27][4] + candles[candles.length-26][4] + candles[candles.length-25][4] + candles[candles.length-24][4] + candles[candles.length-23][4] + candles[candles.length-22][4] + candles[candles.length-21][4] + candles[candles.length-20][4] + candles[candles.length-19][4] + candles[candles.length-18][4] + candles[candles.length-17][4] + candles[candles.length-16][4] + candles[candles.length-15][4] + candles[candles.length-14][4] + candles[candles.length-13][4] + candles[candles.length-12][4] + candles[candles.length-11][4] + candles[candles.length-10][4] + candles[candles.length-9][4] + candles[candles.length-8][4] + candles[candles.length-7][4] + candles[candles.length-6][4] + candles[candles.length-5][4] + candles[candles.length-4][4] + candles[candles.length-3][4])/50) //get EMA of 10th day
       emaList.push(pastEMA)
     }
   }
-  return emaList
+  return [emaList, candles[candles.length-2], candles[candles.length-3]]
 }
 
 async function getTenDayEMA() {
@@ -244,7 +247,6 @@ async function monitorPrice() {
   console.log(POLLING_INTERVAL)
   monitoringPrice = true
   var trend;
-  var SSL = await getHourlySSLChannel()
 
 
   if(POLLING_INTERVAL == 3600000){
@@ -295,10 +297,15 @@ async function monitorPrice() {
       POLLING_INTERVAL = 3600000 || process.env.POLLING_INTERVAL
       setInterval(async () => await monitorPrice(), 3600000);
     } else{
-      var getRecentCandles = await get5MinsHistoricalPrices();
-      var getEMA = await get50MinDayEMA();
+      var EMA = await get50MinDayEMA();
+      var getEMA = EMA[0]
+      var getMostRecent = EMA[1]
+      var getNextMostRecent = EMA[2]
+      console.log("Most Recent Candle is: " + getMostRecent)
+      console.log("Next Most Recent Candle is: " + getNextMostRecent)
+      console.log("The Last two EMA values older to newest were: " + getEMA[48] + " and " + getEMA[49])
       if (trend === "Up"){
-        if(getRecentCandles[0][1] > getRecentCandles[0][4] && getRecentCandles[1][1] < getRecentCandles[1][4] && (getRecentCandles[0][2] >= getEMA[48] && getRecentCandles[0][3] <= getEMA[48]) && (getRecentCandles[1][2] >= getEMA[49] && getRecentCandles[1][3] <= getEMA[49])){
+        if(getNextMostRecent[1] > getNextMostRecent[4] && getMostRecent[1] < getMostRecent[4] && (getNextMostRecent[2] >= getEMA[48] && getNextMostRecent[3] <= getEMA[48]) && (getMostRecent[2] >= getEMA[49] && getMostRecent[3] <= getEMA[49])){
           if(dai > 100){
             console.log("Buy Eth")
             notifier.notify({
@@ -319,7 +326,7 @@ async function monitorPrice() {
           }
         }
       } else if(trend === "Down"){
-        if(getRecentCandles[0][1] < getRecentCandles[0][4] && getRecentCandles[1][1] > getRecentCandles[1][4] && (getRecentCandles[0][2] >= getEMA[48] && getRecentCandles[0][3] <= getEMA[48]) && (getRecentCandles[1][2] >= getEMA[49] && getRecentCandles[1][3] <= getEMA[49])){
+        if(getNextMostRecent[1] < getNextMostRecent[4] && getMostRecent[1] > getMostRecent[4] && (getNextMostRecent[2] >= getEMA[48] && getNextMostRecent[3] <= getEMA[48]) && (getMostRecent[2] >= getEMA[49] && getMostRecent[3] <= getEMA[49])){
           if(eth > .5){
             console.log("Sell Eth")
             notifier.notify({
