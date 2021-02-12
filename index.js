@@ -128,10 +128,10 @@ async function getHourlySSLChannel() {
     }
   }
   for (var i = candles.length - 2; i > 1; i--){
-    highSum = highSum + candles[i][2]
-    prevHighSum = prevHighSum + candles[i-1][2]
-    lowSum = lowSum + candles[i][3]
-    prevLowSum = prevLowSum + candles[i-1][3]
+    highSum = highSum + candles[i][3]
+    prevHighSum = prevHighSum + candles[i-1][3]
+    lowSum = lowSum + candles[i][2]
+    prevLowSum = prevLowSum + candles[i-1][2]
   }
   highSMA = highSum/10;
   lowSMA = lowSum/10;
@@ -305,7 +305,7 @@ async function monitorPrice() {
       console.log("Next Most Recent Candle is: " + getNextMostRecent)
       console.log("The Last two EMA values older to newest were: " + getEMA[48] + " and " + getEMA[49])
       if (trend === "Up"){
-        if(getNextMostRecent[1] > getNextMostRecent[4] && getMostRecent[1] < getMostRecent[4] && (getNextMostRecent[2] >= getEMA[48] && getNextMostRecent[3] <= getEMA[48]) && (getMostRecent[2] >= getEMA[49] && getMostRecent[3] <= getEMA[49])){
+        if(getNextMostRecent[1] > getNextMostRecent[4] && getMostRecent[1] < getMostRecent[4] && (getNextMostRecent[2] <= getEMA[48] && getNextMostRecent[3] >= getEMA[48]) && (getMostRecent[2] <= getEMA[49] && getMostRecent[3] >= getEMA[49])){
           if(dai > 100){
             console.log("Buy Eth")
             notifier.notify({
@@ -326,7 +326,7 @@ async function monitorPrice() {
           }
         }
       } else if(trend === "Down"){
-        if(getNextMostRecent[1] < getNextMostRecent[4] && getMostRecent[1] > getMostRecent[4] && (getNextMostRecent[2] >= getEMA[48] && getNextMostRecent[3] <= getEMA[48]) && (getMostRecent[2] >= getEMA[49] && getMostRecent[3] <= getEMA[49])){
+        if(getNextMostRecent[1] < getNextMostRecent[4] && getMostRecent[1] > getMostRecent[4] && (getNextMostRecent[2] <= getEMA[48] && getNextMostRecent[3] >= getEMA[48]) && (getMostRecent[2] <= getEMA[49] && getMostRecent[3] >= getEMA[49])){
           if(eth > .5){
             console.log("Sell Eth")
             notifier.notify({
