@@ -248,7 +248,7 @@ async function monitorPrice() {
   monitoringPrice = true
   var trend;
 
-
+//Check inverse highs and lows since I inverse data from candles from dai-eth to eth-dai
   if(POLLING_INTERVAL == 3600000){
     var SSL = await getHourlySSLChannel()
     console.log(SSL)
