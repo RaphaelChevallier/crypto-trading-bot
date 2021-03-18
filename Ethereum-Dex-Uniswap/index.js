@@ -138,7 +138,7 @@ async function getHourlySSLChannel() {
   prevHighSMA = prevHighSum/10
   prevLowSMA = prevLowSum/10
   volumeAvg = sumVolume/10;
-  if(candles[11][5] > volumeAvg + 10000){
+  if(candles[11][5] > volumeAvg + 7000){
     aboveAvgVolume = true;
   }
   // currentCandleVolume = candles[12][5]
@@ -315,7 +315,7 @@ async function monitorPrice() {
               'wait': true,
               timeout: 5
             });
-            priceEth = getRecentCandles[1][4];
+            priceEth = getMostRecent[4];
             eth = eth + ((dai*.9)/priceEth)
             dai = dai - 15 -(dai*.1);
             console.log("New Dai Amount: " + dai)
@@ -336,7 +336,7 @@ async function monitorPrice() {
               'wait': true,
               timeout: 5
             });
-            priceDai = 1/getRecentCandles[1][4];
+            priceDai = 1/getMostRecent[4];
             dai = dai + ((eth*.9)/priceDai);
             eth = eth - 0.00833386 - (eth*.1);
             console.log("New Dai Amount: " + dai)
@@ -385,5 +385,5 @@ async function monitorPrice() {
 var eth = 10;
 var dai = 5000;
 // Check markets every n seconds
-var POLLING_INTERVAL = process.env.POLLING_INTERVAL || 3600000 // 1 Second
+var POLLING_INTERVAL = process.env.POLLING_INTERVAL || 3600000 // 1 Hr
 priceMonitor = setInterval(async () => { await monitorPrice() }, POLLING_INTERVAL)
